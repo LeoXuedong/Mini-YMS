@@ -1,5 +1,7 @@
 # Mini-YMS
 
+[![CI](https://github.com/LeoXuedong/Mini-YMS/actions/workflows/ci.yml/badge.svg)](https://github.com/LeoXuedong/Mini-YMS/actions/workflows/ci.yml)
+
 **离线良率数据分析工具** · Yield Management System
 纯前端单页应用，双击 `YMS-App/index.html` 即可使用 —— 无需安装 Python / Node / 数据库，**无需联网**。
 
@@ -98,7 +100,8 @@ node YMS-App/test/run.js        # 全量
 node YMS-App/test/run.js --only=legend-mark-style.js   # 单个用例
 ```
 
-**CI**：每次 push / PR 到 `main` 自动跑（`.github/workflows/ci.yml`，windows-latest）。
+**CI**：每次 push / PR 到 `main` 自动跑（`.github/workflows/ci.yml`，windows-latest）——
+CI 实测 **17 用例 / 1328 断言**（跳过需大样本的 `box-column-align.js`，其 26 条断言本地补跑）。
 
 > `box-column-align.js` 需要 10 万行样本（未随仓库分发），CI 里通过 `YMS_SKIP_CASES` 跳过并在日志中明示；
 > 本地把该文件放回 `YMS-App/` 后即可完整跑 18 个用例。
