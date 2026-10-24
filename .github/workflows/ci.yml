@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# 说明：
+#  • 跑在 windows-latest —— 与开发实测环境一致（字体度量会影响像素级几何断言）
+#  • 用例里的测试数据全部由用例自己合成，除 box-column-align.js 外不依赖任何外部大文件
+#  • box-column-align.js 需要 10 万行样本（9.3 MB，未随仓库分发）→ 用 YMS_SKIP_CASES 跳过，
+#    日志会明确打印跳过了哪些，避免把 17/17 误读成全覆盖
+#  • Playwright 版本与本地开发固定一致（1.62.1），避免渲染差异导致几何断言抖动
+
+jobs:
+  test:
+    name: 断言回归（Playwright + Chromium）
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    env:
+      YMS_SKIP_CASES: box-column-align.js
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 安装依赖（Playwright）
+        run: npm install --no-audit --no-fund
+
+      - name: 下载 Chromium
+        run: npx playwright install chromium
+
+      - name: 运行断言套件
+        run: node YMS-App/test/run.js
+
+      - name: 汇总（失败时也打印跳过说明）
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "跳过（需本地大样本，仓库未随附）: $env:YMS_SKIP_CASES"
+          Write-Host "本地完整跑法：node YMS-App/test/run.js（需放回 10 万行样本）"

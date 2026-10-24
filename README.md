@@ -73,10 +73,11 @@ build/
 
 | 已包含 | 未包含（有意排除） |
 |---|---|
-| 应用源码（HTML / CSS / JS）| 自动化测试用例与夹具（`YMS-App/test/`）|
-| 离线依赖（`vendor/`）| 10 万行大示例数据集（9 MB，非运行必需）|
-| 6000 行示例数据 | 打包产物 `.zip`、历史备份目录 `build/bak_*` |
-| 打包脚本、用户手册 | 应用运行期自动生成的时间戳备份文件 |
+| 应用源码（HTML / CSS / JS）| 10 万行大示例数据集（9.3 MB，非运行必需）|
+| 离线依赖（`vendor/`）| 打包产物 `.zip`、历史备份目录 `build/bak_*` |
+| 6000 行示例数据 | 应用运行期自动生成的时间戳备份文件 |
+| 打包脚本、用户手册 | `node_modules/`（CI 里重装）|
+| **自动化测试套件**（`YMS-App/test/`，CI 用）| 测试运行期产生的截图与中间产物 |
 
 需要完整发布包（含 10 万行数据集）时，在本地把该文件放回 `YMS-App/sample/` 后执行：
 
@@ -85,6 +86,24 @@ python build/package.py
 ```
 
 ---
+
+## 测试
+
+18 个用例 / **1354 条断言**，用 Playwright 驱动真实 Chromium（非 mock），覆盖数据正确性、渲染几何、交互与 `.yms` schema。
+
+```bash
+npm install                     # 首次
+npx playwright install chromium
+node YMS-App/test/run.js        # 全量
+node YMS-App/test/run.js --only=legend-mark-style.js   # 单个用例
+```
+
+**CI**：每次 push / PR 到 `main` 自动跑（`.github/workflows/ci.yml`，windows-latest）。
+
+> `box-column-align.js` 需要 10 万行样本（未随仓库分发），CI 里通过 `YMS_SKIP_CASES` 跳过并在日志中明示；
+> 本地把该文件放回 `YMS-App/` 后即可完整跑 18 个用例。
+>
+> 测试有效性靠「**自证**」保证：把某处修复**还原成改动前**再跑，相应用例必须变红。
 
 ## 许可
 

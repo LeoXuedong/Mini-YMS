@@ -1,0 +1,16 @@
+{
+  "name": "mini-yms",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mini-YMS · 离线良率数据分析工具（纯前端）。测试套件用 Playwright 驱动真实 Chromium。",
+  "scripts": {
+    "test": "node YMS-App/test/run.js",
+    "package": "python build/package.py"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
