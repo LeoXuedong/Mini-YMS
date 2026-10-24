@@ -1,0 +1,644 @@
+/* ==========================================================================
+   YMS · css/polish.css  —— 迭代 17 · B 路（Impeccable「Operate 模式」交互/层次/响应式精修）
+   --------------------------------------------------------------------------
+   本文件是**纯覆盖层**：只新增规则，不改动 theme / layout / components / plot /
+   table / report 六个样式文件里的任何既有取值，也不重定义任何颜色令牌。
+   加载顺序：index.html 中必须排在最后（report.css 之后），靠「后写者胜」覆盖。
+
+   内容分六节：
+     1. 焦点可见体系（:focus-visible 统一 2px 环 + 2px offset，跨七套主题）
+     2. 点击/触达目标 + 禁用态（24×24 最小热区、禁用不响应 hover）
+     3. 动效规范（--dur-1/2/3，只过渡 opacity/transform/box-shadow/颜色；reduced-motion 归零）
+     4. 层次与密度（4/8 网格、三级字阶、等宽数字）
+     5. 响应式补档（1100–1440 渐进收缩，无横向滚动、面板与图不互挤）
+     6. 滚动条统一细样式
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   0. 局部变量：只新增「尺寸 / 时长」，不覆盖任何主题颜色令牌
+   -------------------------------------------------------------------------- */
+:root {
+  --dur-1: 120ms;             /* 即时反馈：hover / active / 焦点 */
+  --dur-2: 160ms;             /* 状态切换：卡片高亮、选中 */
+  --dur-3: 200ms;             /* 浮层出现（保留给弹层/提示，慎用） */
+  --hit: 24px;                /* 最小点击目标（桌面） */
+  --gap-1: 4px;               /* 4/8 网格：紧凑间距 */
+  --gap-2: 8px;
+  --ring-w: 2px;              /* 焦点环宽度 */
+  --ring-off: 2px;            /* 焦点环与控件的间隙 */
+}
+
+/* ==========================================================================
+   1. 焦点可见体系
+   --------------------------------------------------------------------------
+   设计意图（Operate 模式）：键盘用户任何时候都能回答「我现在在哪」。
+   · 统一 2px 实心环 + 2px offset，颜色取主题 --accent（七套主题下对各自面板底
+     都有足够对比度；暗色主题 #38a3d1 / #38bdf8 在 #141b23 上 > 7:1）；
+   · 环画在 outline 上（不参与布局、不被 overflow 裁掉、不覆盖原有 box-shadow 语义）；
+   · 同时保留各主题的 --focus-ring 柔光（box-shadow），深浅底上都可辨；
+   · :focus:not(:focus-visible) 不画环 —— 鼠标点击不出现「键盘环」，保留原生手感。
+   覆盖范围：顶栏按钮 / 菜单触发器 / 菜单项 / 快捷栏 / 设置区全部控件
+   （select / input / checkbox / chip / dropSelect 触发器与选项）/ 表头与单元格 /
+   图卡 / 弹层按钮 / 右键菜单项 / 树与列表项 / 分隔条。
+   -------------------------------------------------------------------------- */
+
+/* 1.1 统一焦点环（!important 仅用于压过 theme.css 的全局 `:focus-visible{outline:none}`） */
+:focus-visible {
+  outline: var(--ring-w) solid var(--accent) !important;
+  outline-offset: var(--ring-off) !important;
+  box-shadow: var(--focus-ring) !important;
+  scroll-margin-block: 32px 56px;      /* 键盘聚焦时给吸顶表头 / 吸底动作区留出空间 */
+}
+
+/* 1.2 鼠标点击（非键盘）不显示焦点环：不删除可访问性，只区分输入模态 */
+:focus:not(:focus-visible) {
+  outline: none !important;
+}
+
+/* 1.3 顶栏底色恒为深色（两套浅色主题下也是深色渐变）+ 按钮为浅字：
+       这里用 currentColor 作环色，浅/深主题下都与顶栏底 > 7:1 */
+#app-header :focus-visible {
+  outline-color: currentColor !important;
+}
+
+/* 1.4 主色实心按钮（Submit / 激活的快捷按钮）：环落在面板底色上，改用墨色更清楚 */
+.btn-submit:focus-visible,
+.sc-btn.is-active:focus-visible,
+.plot-tab.is-active:focus-visible,
+#fullscreen-root .fs-btn.is-active:focus-visible {
+  outline-color: var(--ink) !important;
+}
+
+/* 1.5 白色/深色实心控件内部的可聚焦子元素（取色器）→ 环画在外层色块上 */
+.gc-swatch:has(> input[type="color"]:focus-visible) {
+  outline: var(--ring-w) solid var(--accent);
+  outline-offset: var(--ring-off);
+}
+
+/* 1.6 表格：表头可点（点选高亮整列）/ 单元格可右键 —— 键盘聚焦时整格有环，
+       环内缩以免被滚动容器裁切；**不改 position**（表头是 sticky，改了会掉下来） */
+table.data-grid thead th:focus-visible,
+table.data-grid tbody td:focus-visible {
+  outline-offset: -2px !important;
+  z-index: 4;
+}
+
+/* 1.7 弹层 / 右键菜单 / 主题浮层 / 列表项：这些元素当前由鼠标驱动，
+       样式层先给出焦点态（若后续补 tabindex 或读屏焦点，视觉即刻成立） */
+.ctx-item:focus-visible,
+.raw-item:focus-visible,
+.tables-item:focus-visible,
+.menu-group:focus-visible,
+.drop-opt:focus-visible,
+.chk-chip:focus-visible,
+.chart-card:focus-visible {
+  outline: var(--ring-w) solid var(--accent) !important;
+  outline-offset: -2px !important;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+/* 1.8 图卡：整卡可聚焦时环内缩，不与卡片阴影打架 */
+.chart-card:focus-visible {
+  box-shadow: var(--shadow-1), inset 0 0 0 var(--ring-w) var(--accent) !important;
+}
+
+/* 1.9 分隔条（键盘 ←/→ 可调宽）：环画在 7px 轨道内侧，避免压住相邻面板 */
+#ps-splitter:focus-visible {
+  outline: var(--ring-w) solid var(--accent) !important;
+  outline-offset: -3px !important;
+  box-shadow: none !important;
+}
+
+/* 1.10 复选框 / 单选框：accent-color 由主题给，这里补一圈焦点柔光，保证 24px 行内可见 */
+.chk-line input[type="checkbox"]:focus-visible,
+.tf-check input[type="checkbox"]:focus-visible,
+.expr-fill input[type="checkbox"]:focus-visible,
+.table-frame-line input[type="checkbox"]:focus-visible {
+  outline: var(--ring-w) solid var(--accent) !important;
+  outline-offset: 2px !important;
+  box-shadow: none !important;
+}
+
+/* ==========================================================================
+   2. 点击 / 触达目标 + 禁用态
+   --------------------------------------------------------------------------
+   桌面最小热区 24×24、相邻图标按钮间距 4px；纯图标按钮一律带 title/aria-label
+   （渲染层已有 title，本层只保证尺寸与间距，不改 DOM）。
+   图标本体视觉尺寸不变时，用 min-width/min-height 扩热区（视觉不变、命中变大）。
+   -------------------------------------------------------------------------- */
+
+/* 2.1 图标按钮热区 ≥ 24×24（.drop-arrow 是装饰性箭头，不扩大以免压住触发器的文字） */
+.mini-btn,
+.modal-x,
+.expr-x,
+.tag .tag-x,
+.chart-card .card-tool,
+.gc-swatch,
+.gc-preset,
+.settings-head .settings-head-toggle {
+  min-width: var(--hit);
+  min-height: var(--hit);
+}
+
+/* 弹层关闭按钮：原来是裸字形，补成方形热区（不改变字号与颜色） */
+.modal-head .modal-x,
+.expr-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: var(--radius);
+}
+
+/* 图卡工具条：按钮 24×24 后卡片头（固定 24px 高）改为无纵向内边距，头高不变 */
+#plot-canvas-wrap .chart-card .card-head {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.chart-card .card-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.chart-card .card-tools {
+  gap: var(--gap-1);
+}
+
+/* 2.2 相邻图标按钮间距 4px（sorter / 筛选 / 分组配色行 / 卡片工具） */
+.sorter-row,
+.filter-row,
+.gc-pick,
+.card-tools,
+.fs-nav,
+.ctx-input-row {
+  gap: var(--gap-1);
+}
+
+/* 2.3 预设色阶小圆点：外框 24×24 命中，颜料仍为 12px（padding + background-clip，
+       视觉密度不变；描边用内缩 outline 模拟，不占布局） */
+.gc-preset {
+  width: var(--hit);
+  height: var(--hit);
+  padding: 6px;
+  border: 0;
+  background-clip: content-box;
+  outline: 1px solid rgba(0, 0, 0, .14);
+  outline-offset: -6px;
+}
+.gc-preset:hover {
+  outline-color: var(--accent);
+  outline-offset: -6px;
+}
+.gc-preset:focus-visible {
+  outline: var(--ring-w) solid var(--accent) !important;
+  outline-offset: 2px !important;
+}
+
+/* 2.4 快捷栏按钮不参与压缩（窄屏时宁可横向滚动，也不挤压文字） */
+.sc-btn,
+.plot-tab,
+.menu-title {
+  flex: 0 0 auto;
+}
+
+/* 2.5 禁用态：统一降对比 + not-allowed + 不响应 hover / active 动效 */
+.btn[disabled],
+.btn[disabled]:hover,
+.btn[disabled]:active,
+button[disabled]:not(.btn),
+button[disabled]:not(.btn):hover,
+select[disabled],
+input[disabled],
+textarea[disabled],
+.tf-btn[disabled],
+.fs-btn[disabled] {
+  opacity: .5;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn[disabled],
+.btn[disabled]:hover {
+  background: var(--panel);
+  border-color: var(--border-strong);
+  color: var(--ink-dim);
+}
+.btn-primary[disabled],
+.btn-primary[disabled]:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  opacity: .42;
+}
+.btn-submit[disabled],
+.btn-submit[disabled]:hover {
+  opacity: .45;
+  cursor: not-allowed;
+}
+select[disabled],
+input[disabled],
+textarea[disabled] {
+  background: var(--bg-sunken);
+  color: var(--ink-dim);
+  border-color: var(--border);
+}
+input[type="checkbox"][disabled],
+input[type="color"][disabled] {
+  cursor: not-allowed;
+}
+/* aria-disabled 的菜单项 / 图形项：连 hover 背景都不给（菜单项渲染层已 pointer-events:none，
+   这里补齐 is-disabled 无 aria 的情况） */
+.menu-item[aria-disabled="true"],
+.menu-item.is-disabled,
+.ctx-item.is-disabled,
+.ctx-item[aria-disabled="true"] {
+  opacity: .45;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: transparent;
+  color: var(--ink-dim);
+}
+
+/* 2.6 表格行：hover（可点）与 selected（已选中）必须能一眼区分
+       —— hover 只换底色，selected 另有主色内嵌左边条 + 加粗（渲染层当前无行选中功能，
+          样式钩子先就位：tr.is-selected / tr[aria-selected="true"]） */
+table.data-grid tbody tr:hover td {
+  background: var(--accent-soft);
+}
+table.data-grid tbody tr.is-selected td,
+table.data-grid tbody tr[aria-selected="true"] td {
+  background: var(--accent-soft) !important;
+  border-top-color: var(--border-strong);
+  border-bottom-color: var(--border-strong);
+  font-weight: 600;
+}
+table.data-grid tbody tr.is-selected td:first-child,
+table.data-grid tbody tr[aria-selected="true"] td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* ==========================================================================
+   3. 动效规范
+   --------------------------------------------------------------------------
+   · 只用 120 / 160 / 200ms 三档，统一 var(--ease)（theme.css 已定义的曲线）；
+   · 只过渡 opacity / transform / box-shadow / border-color / background-color
+     （不再过渡 width/height —— 那会触发每帧重排）；
+   · prefers-reduced-motion: reduce 时全部归零（不是 0.01ms，是 0s）。
+   -------------------------------------------------------------------------- */
+.btn,
+.btn-ghost,
+.menu-title,
+.menu-item,
+.sc-btn,
+.plot-tab,
+.chk-chip,
+.drop-trigger,
+.drop-opt,
+.mini-btn,
+.chart-card .card-tool,
+.raw-item,
+.tables-item,
+.ctx-item,
+.settings-rail-btn,
+.settings-head .settings-head-toggle,
+.grid-pager .btn,
+.field-ctl select,
+.field-ctl input,
+.tf-btn,
+.tf-select,
+.tf-text,
+.tf-num,
+.fs-btn,
+.expr-col,
+.gc-reset,
+.gc-preset {
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+  transition-duration: var(--dur-1);
+  transition-timing-function: var(--ease);
+}
+
+/* 卡片 / 图例 / tab 页切换：稍长一档，仍 ≤ 180ms 观感 */
+.chart-card,
+.plot-tab.is-active {
+  transition-duration: var(--dur-2);
+}
+
+/* 进度条：原本过渡 width（每帧重排），改为不过渡宽度，只保留颜色过渡 */
+.progress-bar > i {
+  transition: background-color var(--dur-2) var(--ease);
+}
+
+/* 微交互不产生位移抖动：active 只做 0.5px 压下，禁用态不位移 */
+.btn:active,
+.sc-btn:active,
+.tf-btn:active {
+  transform: translateY(.5px);
+}
+.btn[disabled]:active,
+.sc-btn[disabled]:active {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   4. 层次与密度（4/8 网格 + 三级字阶 + 等宽数字）
+   --------------------------------------------------------------------------
+   三级层次：面板/区块标题（12px / 700 / 大写字距）
+             > 分组标题（11px / 700，弱化成 --ink-soft）
+             > 字段标签（12px / 400，--ink-soft）
+   间距一律 4 的倍数（4 / 8），控件行高统一 24，分组间隔 8。
+   -------------------------------------------------------------------------- */
+
+/* 4.1 顶栏标题 > 面板头（字阶拉开一档，不改顶栏高度） */
+#app-header .brand-text h1 {
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  letter-spacing: .5px;
+}
+
+/* 4.2 设置面板头：区块标题（第三级之上的层级锚点） */
+.settings-head {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .6px;
+}
+.settings-head > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 4.3 分组标题：弱化颜色、收紧分割线间距（8px 网格） */
+.setting-group {
+  padding: var(--gap-2) 0;
+}
+.setting-group > .group-title {
+  padding-bottom: var(--gap-1);
+  margin-bottom: var(--gap-1);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  letter-spacing: .8px;
+}
+
+/* 4.4 字段行：行高 24（点击目标下限）、行距 4、控件间距 4 */
+.setting-group .field {
+  min-height: var(--hit);
+  margin-bottom: var(--gap-1);
+  gap: var(--gap-1);
+}
+.setting-group .field > .field-ctl {
+  gap: var(--gap-1);
+}
+.setting-group .plus-row {
+  gap: var(--gap-1);
+  margin-bottom: var(--gap-1);
+}
+.setting-group .group-sub {
+  margin: var(--gap-2) 0 var(--gap-1);
+}
+
+/* 4.5 设置区滚动内边距：底部保持 0（sticky 动作区必须与面板底边贴合，回归红线），
+       只在顶部与左右做 8/4 网格对齐 */
+.settings-body {
+  padding-top: var(--gap-2);
+  padding-left: var(--gap-2);
+  padding-right: var(--gap-2);
+}
+
+/* 4.6 面板头 / 状态栏 / 分页器：高度与内边距对齐 4/8 网格 */
+.panel-head {
+  padding: 0 var(--gap-2);
+}
+.panel-title {
+  letter-spacing: .6px;
+}
+#status-bar {
+  padding: 0 var(--gap-2);
+}
+.grid-pager {
+  gap: var(--gap-1) 6px;
+  padding: 4px var(--gap-2);
+}
+
+/* 4.7 数字一律等宽对齐（统计值、行数、页数、坐标读数、表格任意单元格） */
+.status-right,
+.grid-pager,
+.grid-pager .pager-info,
+.chart-card .card-head,
+.tables-item .tshape,
+.tables-item .tname,
+.settings-head,
+.panel-hint,
+#raw-table-name,
+.fs-index,
+.fs-readout,
+.fs-sub,
+.expr-prev-i,
+table.data-grid thead th,
+table.data-grid tbody td {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* 4.8 顶栏 chip：数字等宽 + 统一 22px 行高；文件 chip 单行省略 */
+.header-info .chip {
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+
+/* ==========================================================================
+   5. 响应式补档（1100 / 1280 / 1440 三档）
+   --------------------------------------------------------------------------
+   目标：三档宽度下不出现横向滚动、控件不重叠不被裁、设置区与图互不挤压。
+   做法：
+     · 设置区用 max-width 渐进收缩（不用 flex-basis，避免与 JS 内联 --settings-w 打架：
+       拖动仍可继续变窄，只是大屏之外不允许变宽）；
+     · 顶栏 chip 按「视图 → 行列 → 文件名」顺序依次隐藏；
+     · 快捷栏 nowrap + 横向滚动兜底，绝不换行挤压高度；
+     · 所有 flex/grid 容器补 min-width:0，面板与图各自 scroll 自己的内容。
+   -------------------------------------------------------------------------- */
+
+/* 5.1 结构兜底：任何一列都不许把父级撑宽 */
+#layout,
+#left-col,
+#work-area,
+#data-view,
+#grid-panel,
+#settings-col,
+.settings-panel,
+.settings-body,
+#plot-view,
+#plot-canvas-wrap,
+.chart-grid,
+.chart-card,
+.plot-tabs {
+  min-width: 0;
+}
+
+/* 5.2 设置区与图的联动：设置区只会「变窄」，剩下的宽度全部给图；图区内容自己滚动 */
+#settings-col {
+  min-width: 0;
+}
+#plot-canvas-wrap {
+  overflow: auto;
+}
+
+/* 5.3 快捷栏：不换行（换行会顶高 36px 行高、挤压工作区），窄到放不下时横向滚动 */
+#shortcut-bar {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+#shortcut-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* 5.4 菜单条：窄屏时不把左列撑宽。
+       注意：这里**不能**加 overflow —— 菜单弹层是 .menu-bar 的子节点绝对定位，
+       一旦菜单条成为滚动容器（overflow-x:auto 会把 overflow-y 也算成 auto），
+       下拉列表就会被裁在 34px 高的条里。三个菜单在 1100px 下仍放得下。 */
+#menu-bar {
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+/* 5.5 ≤1440：设置区收到 292，先隐藏「视图」chip（信息价值最低、可由左侧快捷栏替代） */
+@media (max-width: 1440px) {
+  #settings-col:not(.is-collapsed) { max-width: 292px; }
+  #chip-mode { display: none; }
+}
+
+/* 5.6 ≤1280：设置区 276，隐藏「行 × 列」chip；快捷栏按钮内边距收 2px */
+@media (max-width: 1280px) {
+  #settings-col:not(.is-collapsed) { max-width: 276px; }
+  #chip-shape { display: none; }
+  .sc-btn { padding: 0 8px; }
+  #shortcut-bar { gap: var(--gap-1); }
+  .header-info { gap: 6px; }
+}
+
+/* 5.7 ≤1180：设置区 264（与 theme.css 的窄屏令牌同值，这里用 max-width 压过 JS 内联宽度）；
+        数据设置区展开时表格侧不再被压到 < 300px 可用宽 */
+@media (max-width: 1180px) {
+  #settings-col:not(.is-collapsed) { max-width: 264px; }
+  #raw-panel { flex-basis: 210px; width: 210px; }
+  .setting-group .field > label { flex-basis: 64px; width: 64px; }
+  .setting-group .field-ctl > .chk-grid { gap: 3px 6px; }
+  .settings-head { font-size: 11px; }
+}
+
+/* 5.8 ≤1100：设置区 252，文件名 chip 截断；图卡网格 gap 收到 8 */
+@media (max-width: 1100px) {
+  #settings-col:not(.is-collapsed) { max-width: 252px; }
+  #chip-file { max-width: 168px; }
+  .brand { min-width: 0; }
+  .brand-text p { display: none; }
+  .chart-grid { gap: var(--gap-2); }
+  #plot-canvas-wrap { padding: var(--gap-2); }
+}
+
+/* ==========================================================================
+   6. 滚动条：统一细样式（颜色全部取主题令牌，深色底自动反相）
+   -------------------------------------------------------------------------- */
+#grid-wrap,
+#raw-header-list,
+#plot-canvas-wrap,
+#tables-list,
+.settings-body,
+.menu-table-list,
+.menu-list,
+.drop-panel,
+.modal-body,
+.expr-body,
+.fn-body,
+.chk-chips,
+.tf-preview-scroll,
+textarea {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+  overscroll-behavior: contain;
+}
+
+#grid-wrap::-webkit-scrollbar,
+#raw-header-list::-webkit-scrollbar,
+#plot-canvas-wrap::-webkit-scrollbar,
+#tables-list::-webkit-scrollbar,
+.settings-body::-webkit-scrollbar,
+.menu-table-list::-webkit-scrollbar,
+.menu-list::-webkit-scrollbar,
+.drop-panel::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar,
+.expr-body::-webkit-scrollbar,
+.fn-body::-webkit-scrollbar,
+.chk-chips::-webkit-scrollbar,
+.tf-preview-scroll::-webkit-scrollbar,
+textarea::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+#grid-wrap::-webkit-scrollbar-track,
+#raw-header-list::-webkit-scrollbar-track,
+#plot-canvas-wrap::-webkit-scrollbar-track,
+#tables-list::-webkit-scrollbar-track,
+.settings-body::-webkit-scrollbar-track,
+.menu-table-list::-webkit-scrollbar-track,
+.drop-panel::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track,
+.chk-chips::-webkit-scrollbar-track,
+.tf-preview-scroll::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+#grid-wrap::-webkit-scrollbar-thumb,
+#raw-header-list::-webkit-scrollbar-thumb,
+#plot-canvas-wrap::-webkit-scrollbar-thumb,
+#tables-list::-webkit-scrollbar-thumb,
+.settings-body::-webkit-scrollbar-thumb,
+.menu-table-list::-webkit-scrollbar-thumb,
+.drop-panel::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb,
+.chk-chips::-webkit-scrollbar-thumb,
+.tf-preview-scroll::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 8px;
+}
+#grid-wrap::-webkit-scrollbar-thumb:hover,
+#raw-header-list::-webkit-scrollbar-thumb:hover,
+.settings-body::-webkit-scrollbar-thumb:hover,
+#plot-canvas-wrap::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover,
+.chk-chips::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-dim);
+  background-clip: content-box;
+}
+
+/* v1.0.0：头部版本徽标（紧跟「良率管理系统」） */
+.app-ver {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted, #7b8794);
+  margin-left: 6px;
+  letter-spacing: .3px;
+  vertical-align: middle;
+}

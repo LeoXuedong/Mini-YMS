@@ -1,0 +1,311 @@
+/* ==========================================================================
+   YMS 布局层：顶部标题栏 / 左右两列 / 左列三行 / 状态栏
+   结构约定（与 index.html 一致）：
+   #app > #app-header + #layout( #left-col > #menu-bar + #shortcut-bar + #work-area + #status-bar , #settings-col )
+   #work-area > #data-view(#raw-panel + #grid-panel) | #plot-view(#plot-tabs + #plot-canvas-wrap)
+   ========================================================================== */
+
+/* 右列（设置区）宽度令牌：默认 300px（迭代 7 起比旧默认 330px 窄，把更大范围让给绘图区主体）。
+   theme.css 里的 --settings-w 是主题层默认值，此处按迭代 7 需求覆盖；实际宽度由
+   #ps-splitter 拖拽实时改写（240 ~ 520 px），双击恢复默认 300px，并持久化到
+   localStorage('yms.settingsWidth')。 */
+:root { --settings-w: 300px; }
+
+/* 迭代 7：整体紧凑化 —— 顶部标题栏 / 菜单区 / 快捷方式区 / 状态栏高度统一收紧
+   （52/38/40/24 → 46/34/36/22px，合计省出 16px 高度给绘图区主体）。
+   这些令牌定义在 theme.css，此处按布局层需求覆盖，不改动主题层文件。 */
+:root {
+  --header-h: 46px;
+  --menu-h: 34px;
+  --shortcut-h: 36px;
+  --status-h: 22px;
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------- 顶部标题栏 */
+#app-header {
+  height: var(--header-h);
+  flex: 0 0 var(--header-h);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 14px;
+  background: linear-gradient(180deg, #182430 0%, #121a23 100%);
+  color: var(--ink-invert);
+  border-bottom: 1px solid #0a1017;
+  position: relative;
+  z-index: 30;
+}
+html[data-theme="dark"] #app-header { background: linear-gradient(180deg, #131a22 0%, #0b1016 100%); }
+
+.brand { display: flex; align-items: center; gap: 10px; min-width: 250px; }
+.brand .logo {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: .5px;
+  font-size: 15px;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: var(--radius);
+  background: rgba(56, 163, 209, .16);
+  color: #a9dcf2;
+}
+.brand-text h1 { font-size: var(--fs-lg); font-weight: 600; letter-spacing: .6px; }
+.brand-text p { font-size: var(--fs-xs); color: #90a4b4; letter-spacing: .3px; }
+
+.header-info { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; overflow: hidden; }
+.header-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+
+/* ------------------------------------------------------------------ 主布局 */
+#layout {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#left-col {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+}
+
+/* 第一行：菜单区 */
+#menu-bar {
+  flex: 0 0 var(--menu-h);
+  height: var(--menu-h);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  z-index: 20;
+}
+
+/* 第二行：快捷方式区 */
+#shortcut-bar {
+  flex: 0 0 var(--shortcut-h);
+  height: var(--shortcut-h);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  background: var(--panel-alt);
+  border-bottom: 1px solid var(--border);
+}
+
+/* 第三行：工作区 */
+#work-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+.view { position: absolute; inset: 0; display: none; min-height: 0; }
+.view.is-active { display: flex; }
+
+/* 数据视图：原始表格区 + 数据显示区 */
+#data-view { flex-direction: row; }
+#raw-panel {
+  flex: 0 0 260px;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+}
+#grid-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--panel);
+}
+
+/* 迭代 14：多表列表（原始表格区顶部）—— 列表自身滚动，最多占用 8 行高度，
+   不挤压下方 #raw-header-list（列清单）的可用空间 */
+#tables-panel {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-width: 100%;
+  border-bottom: 1px solid var(--grid-line);
+  background: var(--panel);
+}
+#tables-panel.is-empty { display: none; }
+#tables-list {
+  flex: 0 1 auto;
+  max-height: 186px;                 /* ≈ 8 项 × 22px + 内边距：>8 张时内部滚动 */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 绘图视图 */
+#plot-view { flex-direction: column; background: var(--bg-sunken); }
+#plot-tabs { flex: 0 0 auto; }
+#plot-canvas-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 10px; }
+
+/* 状态栏 */
+#status-bar {
+  flex: 0 0 var(--status-h);
+  height: var(--status-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 10px;
+  background: var(--panel-head);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  color: var(--ink-soft);
+}
+.status-right { display: flex; gap: 14px; font-family: var(--font-mono); }
+.status-dim { color: var(--ink-dim); }
+.status-msg.is-error { color: var(--danger); font-weight: 600; }
+.status-msg.is-ok { color: var(--ok); }
+.status-msg.is-busy { color: var(--accent); font-weight: 600; }
+
+/* 右列：设置区 */
+#settings-col {
+  flex: 0 0 var(--settings-w);
+  width: var(--settings-w);
+  min-width: var(--settings-w);
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  overflow: hidden;
+}
+.settings-panel { display: none; flex-direction: column; min-height: 0; flex: 1 1 auto; overflow: hidden; }
+.settings-panel.is-active { display: flex; }
+.settings-head {
+  flex: 0 0 auto;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 9px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .7px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  background: var(--panel-head);
+  border-bottom: 1px solid var(--border);
+}
+.settings-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 7px 9px 46px; }
+
+/* ------------------------- 数据设置区：默认收起（迭代 8，仅表格视图生效） -------------------------
+   需求：打开表格时右侧不再铺满数据设置项，把宽度让给表格；但仍保留一个明显的展开入口。
+   实现（JS 见 app.js → initDataSettingsCollapse / applyDsCollapse）：
+     · #settings-col.is-collapsed → 收成 30px 细轨（--settings-rail-w），面板与分隔条一并让位
+     · 细轨里只有一个竖直按钮「数据设置」（点击展开）；展开后由面板头部的「收起 ▸」收回
+     · 展开/收起状态持久化在 localStorage('yms.dataSettingsOpen')
+   绘图视图不受影响：#plot-settings 的行为与宽度完全保持迭代 7 的现状（回归红线）。 */
+:root { --settings-rail-w: 30px; }
+#settings-col.is-collapsed {
+  flex: 0 0 var(--settings-rail-w);
+  width: var(--settings-rail-w);
+  min-width: var(--settings-rail-w);
+  background: var(--panel-head);
+}
+#settings-col.is-collapsed .settings-panel { display: none; }
+/* 收起时整列让位 → 分隔条也随之隐藏（分隔条是 #settings-col 的兄弟节点，故用自身类名控制） */
+#ps-splitter.is-collapsed { display: none; }
+
+/* 收起态细轨：竖直文字按钮（整条可点，明显入口） */
+.settings-rail { display: none; flex: 1 1 auto; min-height: 0; flex-direction: column; }
+#settings-col.is-collapsed .settings-rail { display: flex; }
+.settings-rail-btn {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  user-select: none;
+}
+.settings-rail-btn:hover { background: var(--accent-soft); color: var(--accent-hover); }
+.settings-rail-btn:focus-visible { outline: none; background: var(--accent-soft); }
+.settings-rail-btn .rail-ico { font-size: 12px; letter-spacing: 0; }
+
+/* 面板头部右侧的收起按钮（展开态可见；margin-left:auto 把它推到最右） */
+.settings-head .settings-head-toggle {
+  margin-left: auto;
+  flex: 0 0 auto;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.settings-head .settings-head-toggle:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-hover); }
+
+/* --------------------------------------- 绘图区 ↔ 设置区：可拖拽竖分隔条 */
+/* 拖动实时改 --settings-w（只改 CSS 变量，不触发图卡重绘；拖拽结束才 resize 图表）；
+   双击恢复默认 300px；鼠标悬停 / 拖动中高亮；范围 240 ~ 520 px（由 app.js 钳制）。 */
+#ps-splitter {
+  flex: 0 0 7px;
+  width: 7px;
+  align-self: stretch;
+  position: relative;
+  z-index: 6;
+  cursor: col-resize;
+  background: var(--panel-head);
+  border-right: 1px solid var(--border);
+  touch-action: none;
+}
+/* 中间 1px 抓手线（悬停 / 拖动 / 键盘聚焦时加粗高亮） */
+#ps-splitter::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  margin-left: -1px;
+  background: var(--border-strong);
+}
+#ps-splitter:hover,
+#ps-splitter.is-dragging,
+#ps-splitter:focus-visible { background: var(--accent-soft); outline: none; }
+#ps-splitter:hover::before,
+#ps-splitter.is-dragging::before,
+#ps-splitter:focus-visible::before { width: 2px; background: var(--accent); }
+/* 拖动期间：全局 col-resize 光标 + 禁止选中文本（避免拖出蓝色选区） */
+body.is-col-resizing,
+body.is-col-resizing * { cursor: col-resize !important; user-select: none !important; }
+
+/* 窄屏兜底（仅覆盖 JS 写入内联变量之前的初始默认值） */
+@media (max-width: 1180px) {
+  :root { --settings-w: 264px; }
+  #raw-panel { flex-basis: 210px; width: 210px; }
+}

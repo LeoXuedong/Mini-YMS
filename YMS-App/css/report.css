@@ -1,0 +1,91 @@
+/* ==========================================================================
+   YMS · css/report.css
+   报告层的补充样式（仅作用于**应用内界面**）：
+     1) 报告预览弹窗（.report-preview-*）—— iframe 铺满弹窗、去掉 inner padding；
+     2) 截图隐藏容器（.report-shot-host）—— 离屏布局，供 report.js 创建 ECharts 实例截屏。
+
+   注意：导出的 HTML 报告自带完整内联样式（见 report.js 中的内联 <style>），
+        不依赖本文件，因此报告文件仍然可以离线单独打开。
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- 预览弹窗 */
+.modal.modal-xl .modal-body.is-report {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-sunken);
+}
+
+.report-preview-bar {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  font-size: var(--fs-xs);
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+  background: var(--panel-head);
+  border-bottom: 1px solid var(--border);
+}
+
+.report-preview-frame {
+  flex: 1 1 auto;
+  display: block;
+  width: 100%;
+  height: 72vh;
+  min-height: 360px;
+  border: 0;
+  background: #ffffff;
+}
+
+/* 预览内的滚动条保持细窄，贴近仪器观感 */
+.report-preview-frame::-webkit-scrollbar { width: 8px; }
+
+/* -------------------------------------------------- 截图用隐藏容器（离屏） */
+/* 关键：必须保留布局尺寸且不可用 display:none / 0 尺寸，否则 ECharts 取不到画布内容。
+   使用 left:-10000px 离屏 + pointer-events:none，避免影响用户操作与视觉。 */
+.report-shot-host {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 960px;
+  height: 560px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.report-shot-host > div { width: 960px; height: 560px; }
+
+/* -------------------------------------------------- PPT 截图用隐藏容器（离屏） */
+/* 与 HTML 报告同一思路，但分辨率更高（1280×720，pixelRatio 2）以适配投影演示；
+   同样必须保留布局尺寸（不能用 display:none / 0 尺寸），否则 ECharts 取不到画布内容。 */
+.report-ppt-shot-host {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 1280px;
+  height: 720px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.report-ppt-shot-host > div { width: 1280px; height: 720px; }
+
+/* ------------------------------------------------------------ 明暗主题适配 */
+html[data-theme="dark"] .report-preview-frame {
+  /* 导出的报告本身是浅色印刷风格，深色主题下保持白底以保证可读性 */
+  background: #ffffff;
+}
+
+html[data-theme="dark"] .report-preview-bar {
+  background: var(--panel-alt);
+  color: var(--ink-dim);
+}
+
+/* ------------------------------------------------------------------ 打印 */
+@media print {
+  .report-preview-bar,
+  .report-ppt-shot-host,
+  .report-shot-host { display: none !important; }
+}

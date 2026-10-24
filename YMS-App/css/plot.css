@@ -1,0 +1,176 @@
+/* ==========================================================================
+   YMS · css/plot.css
+   绘图区样式（绘图核心层：PlotView / PlotSettings / ChartBuilder + Fullscreen）。
+   说明：基础类名（.plot-tabs/.plot-tab/.chart-grid/.chart-card/.card-head/.card-tool/
+        .setting-group/.plus-row/.sorter-row/.empty-hint/.fs-*）已由 css/components.css
+        定义，此处只做绘图区专属的补充与布局细节，不覆盖公共层既有规则。
+   ========================================================================== */
+
+/* =============================== 1. 绘图视图骨架 ============================== */
+
+/* 画布区：为网格留出滚动内边距（layout.css 已给 padding/overflow，这里只补充细节） */
+#plot-canvas-wrap { background: var(--bg-sunken); }
+
+/* 页签信息（图表总数 / 当前页 / 合并信息 / 渲染耗时） */
+.plot-tabs .tabs-info {
+  max-width: 62%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+
+/* 空状态引导 */
+.plot-empty-wrap { display: flex; align-items: center; justify-content: center; min-height: 240px; }
+.empty-hint.plot-empty {
+  max-width: 620px;
+  margin: 26px auto;
+  padding: 18px 20px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  text-align: left;
+  line-height: 1.7;
+}
+.empty-hint .plot-empty-title { font-weight: 600; color: var(--ink-soft); }
+.empty-hint .plot-empty-note { margin-top: 4px; font-size: var(--fs-xs); color: var(--ink-dim); }
+
+/* =============================== 2. 图表网格与卡片 ============================ */
+
+/* 网格撑满绘图区可用高度（JS 会按行列数写入确定的行高；此处为兜底规则）。
+   迭代 8：行改为 1fr 拉伸（align-content 由 start 改 stretch）—— 卡片高度 = 行高，
+   整页图卡恰好铺满绘图区宽高，不再在卡片下方留出成片空白。 */
+.chart-grid {
+  gap: 10px;
+  align-content: stretch;
+  min-height: 100%;
+  grid-auto-rows: minmax(240px, 1fr);
+}
+
+/* 卡片宽度（迭代 8 自适应）：
+   · 多图页：铺满各自网格单元（同一行等宽 → 整行铺满，无右侧空白带）
+     —— 去掉迭代 5 起「一刀切」的 760px 上限（该上限把多图页也压窄）。
+   · 单图页（JS 加 .is-single）：保留 900px 宽度上限并居中，避免被拉成超宽扁条。
+   注意：必须用 width:100% + 网格单元默认拉伸 —— 只给 max-width 配 margin:auto 会让
+   网格项退化为 fit-content 宽度（实测卡片被压到 ~112px）。 */
+.chart-grid .chart-card {
+  width: 100%; max-width: none; justify-self: stretch;
+  height: 100%; min-height: 240px;
+  transition: border-color .12s, box-shadow .12s;
+}
+.chart-grid.is-single .chart-card { max-width: 900px; justify-self: center; }
+.chart-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-2); }
+.chart-card .card-head { height: 24px; min-height: 24px; user-select: none; }
+.chart-card .card-title { font-size: var(--fs-xs); }
+.chart-card .card-tool { line-height: 1; }
+.chart-card .chart-body { position: relative; overflow: hidden; }
+.chart-card .chart-body > canvas,
+.chart-card .chart-body > div { width: 100%; height: 100%; }
+/* 双击放大提示（悬停卡片时显示） */
+.chart-card .card-tools::after {
+  content: '双击放大';
+  margin-left: 4px;
+  font-size: 10px;
+  color: var(--ink-dim);
+  opacity: 0;
+  transition: opacity .12s;
+}
+.chart-card:hover .card-tools::after { opacity: 1; }
+
+/* 页签较多时可换行 */
+.plot-tabs { row-gap: 4px; }
+.plot-tabs .plot-tab { flex: 0 0 auto; }
+
+/* =============================== 3. 绘图设置面板 ============================== */
+
+/* 底部动作区：sticky 贴底 + 顶部分隔线；Submit 满宽，重置次之 */
+.ps-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin-top: 8px;
+  padding: 8px 0 2px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  border-bottom: 0;
+}
+.ps-actions .ps-btn-row { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+.ps-actions .ps-btn-row .btn-submit { flex: 0 0 auto; width: 100%; }
+.ps-actions .ps-btn-row .btn { flex: 0 0 auto; width: 100%; justify-content: center; }
+
+.sorter-list { display: flex; flex-direction: column; gap: 0; width: 100%; }
+.sorter-list:empty { display: none; }
+.sorter-row .rank { flex: 0 0 16px; }
+
+.chk-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 10px;
+  margin-top: 2px;
+}
+.chk-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--ink-soft);
+  cursor: pointer;
+  user-select: none;
+}
+.chk-line input[type="checkbox"] { margin: 0; cursor: pointer; }
+.chk-line:hover { color: var(--accent-hover); }
+
+/* 极短字段标签（字号 / Min / Max / 阶数 / 行 / ×） */
+.lbl-mini { flex: 0 0 auto; font-size: var(--fs-xs); color: var(--ink-dim); }
+
+/* ==========================================================================
+   YMS · css/plot.css
+   绘图区样式。文件由绘图核心层（YMS.PlotView 等）创建；本区块为
+   「单图放大视图」（js/plot/fullscreen.js）追加的补充样式。
+   基础骨架（.fs-mask/.fs-panel/.fs-head/.fs-title/.fs-sub/.fs-nav/.fs-index/
+   .fs-body/.fs-foot/.fs-readout 与 #fullscreen-root）已由 css/components.css 定义，
+   此处只补足交互态与布局细节，不覆盖既有规则。
+   ========================================================================== */
+
+/* ==== Fullscreen（单图放大视图 · YMS.Fullscreen） ==== */
+#fullscreen-root .fs-body { position: relative; overflow: hidden; }
+#fullscreen-root .fs-body > .echarts-host { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* 头部：标题 + 副标题在**整行内水平居中**（迭代 21 需求 ①），导航按钮仍在右侧。
+   实现：head 保持 flex（导航靠右由 components.css 的 margin-left:auto 保证），
+   .fs-titles 绝对居中（left:50% + translateX(-50%)）—— 与头部中心严格对齐，
+   宽度上限按导航实测宽度（--fs-nav-w，由 fullscreen.js 每次 render 写入）预留，
+   故标题再长也只会在自身盒内省略（不推挤、不重叠、不换行）。 */
+#fullscreen-root .fs-head { position: relative; min-height: 46px; }
+#fullscreen-root .fs-titles {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: calc(100% - 2 * var(--fs-nav-w, 240px) - 40px);
+  display: flex; flex-direction: column; align-items: stretch; gap: 1px;
+  min-width: 0; overflow: hidden; pointer-events: none;
+}
+#fullscreen-root .fs-titles .fs-title,
+#fullscreen-root .fs-titles .fs-sub {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-align: center; max-width: 100%;
+}
+#fullscreen-root .fs-nav { margin-left: auto; flex: 0 0 auto; white-space: nowrap; }
+
+/* 导航按钮 */
+#fullscreen-root .fs-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 22px; padding: 0 9px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius);
+  background: var(--panel); color: var(--ink-soft);
+  font-size: var(--fs-xs); cursor: pointer;
+}
+#fullscreen-root .fs-btn:hover:not([disabled]) { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-hover); }
+#fullscreen-root .fs-btn[disabled] { opacity: .4; cursor: not-allowed; }
+#fullscreen-root .fs-btn.is-active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+#fullscreen-root .fs-btn.is-close { padding: 0 8px; }
+
+/* 底部提示与读数区 */
+#fullscreen-root .fs-foot .fs-hint { color: var(--ink-dim); }
+#fullscreen-root .fs-readout { text-align: right; }
+#fullscreen-root.is-pan .fs-foot .fs-hint::after { content: ' · 纯平移模式'; color: var(--accent-3); }

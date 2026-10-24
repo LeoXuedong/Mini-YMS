@@ -1,0 +1,404 @@
+/* ==========================================================================
+   YMS 主题层：设计令牌（科研质感 —— 仪器面板 / 精确网格 / 表格数字）
+   所有颜色、字号、间距在此定义；组件层只引用变量。
+   ========================================================================== */
+
+:root {
+  /* 色板：冷灰底 + 仪器蓝主色 + 青绿辅色 */
+  --bg:            #eef1f4;
+  --bg-sunken:     #e6eaee;
+  --panel:         #ffffff;
+  --panel-alt:     #f7f9fa;
+  --panel-head:    #f2f5f7;
+  --border:        #d3dae0;
+  --border-strong: #b6c0c9;
+  --grid-line:     #e9edf0;
+
+  --ink:           #16202a;
+  --ink-soft:      #4a5866;
+  --ink-dim:       #7d8b98;
+  --ink-invert:    #f4f8fa;
+
+  --accent:        #0b6e99;   /* 仪器蓝 */
+  --accent-hover:  #0a5b7e;
+  --accent-soft:   #e3f0f6;
+  --accent-2:      #0f9d8f;   /* 青绿 */
+  --accent-3:      #b8860b;   /* 铜金（标注） */
+  --danger:        #c0392b;
+  --danger-soft:   #fdecea;
+  --warn:          #b7791f;
+  --ok:            #1f7a4d;
+
+  /* 类型色（参数类型标记） */
+  --type-number:   #0b6e99;
+  --type-time:     #7b5ea7;
+  --type-string:   #4a5866;
+
+  /* 排版 */
+  --font-ui: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Consolas", "SFMono-Regular", monospace;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 14px;
+  --fs-xl: 16px;
+  --fs-title: 18px;
+
+  /* 尺寸 */
+  --header-h: 52px;
+  --menu-h: 38px;
+  --shortcut-h: 40px;
+  --status-h: 24px;
+  --settings-w: 330px;
+  --radius: 3px;
+  --radius-lg: 5px;
+
+  /* 阴影（极克制，保持"仪表盘"观感） */
+  --shadow-1: 0 1px 2px rgba(16, 32, 42, .08);
+  --shadow-2: 0 4px 14px rgba(16, 32, 42, .12);
+  --shadow-3: 0 12px 34px rgba(16, 32, 42, .22);
+
+  --focus-ring: 0 0 0 2px rgba(11, 110, 153, .28);
+}
+
+
+/* ---------------------------------------------------------------- 基础重置 */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+h1, h2, h3, h4, p { margin: 0; }
+button { font-family: inherit; font-size: inherit; color: inherit; }
+input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+table { border-collapse: collapse; }
+/* 数字一律等宽对齐 —— 科研数据观感 */
+.num, .mono, input[type="number"], .data-grid td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border: 2px solid var(--bg); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-dim); }
+
+/* 焦点可见性 */
+:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* ECharts 画布容器自适应 */
+.echarts-host { width: 100%; height: 100%; }
+
+/* ==========================================================================
+   迭代 12 · 两套可选高质感主题（UI/UX Pro Max 版式与配色数据库驱动）
+     · ion   离子深色 —— data-dense dashboard / 深色仪表：低亮度底 + 高饱和数据蓝
+     · paper 纸白     —— 出版级浅色：纸面白 + 深墨蓝 + 铜金标注
+   令牌键与默认浅色（:root）完全一致，组件层无需改动即整体换肤。
+   ========================================================================== */
+html[data-theme="ion"] {
+  --bg:            #0a0e14;
+  --bg-sunken:     #060910;
+  --panel:         #111826;
+  --panel-alt:     #0e1520;
+  --panel-head:    #151e2c;
+  --border:        #1e2a3a;
+  --border-strong: #2f4055;
+  --grid-line:     #16202e;
+
+  --ink:           #e6edf5;
+  --ink-soft:      #a7b6c6;
+  --ink-dim:       #71818f;
+  --ink-invert:    #0a0e14;
+
+  --accent:        #38bdf8;
+  --accent-hover:  #63cdfa;
+  --accent-soft:   #0d2b3b;
+  --accent-2:      #22c55e;
+  --accent-3:      #f59e0b;
+  --danger:        #f0604f;
+  --danger-soft:   #3a1a18;
+  --warn:          #e0a83c;
+  --ok:            #3fbf7f;
+
+  --type-number:   #38bdf8;
+  --type-time:     #b396f0;
+  --type-string:   #93a1af;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .55);
+  --shadow-2: 0 6px 18px rgba(0, 0, 0, .62);
+  --shadow-3: 0 16px 40px rgba(0, 0, 0, .72);
+  --focus-ring: 0 0 0 2px rgba(56, 189, 248, .45);
+}
+
+html[data-theme="paper"] {
+  --bg:            #f6f7f9;
+  --bg-sunken:     #eceff3;
+  --panel:         #ffffff;
+  --panel-alt:     #fafbfc;
+  --panel-head:    #f1f4f8;
+  --border:        #dfe5ec;
+  --border-strong: #c3cdd9;
+  --grid-line:     #edf1f5;
+
+  --ink:           #0f172a;
+  --ink-soft:      #475569;
+  --ink-dim:       #7c8a9a;
+  --ink-invert:    #ffffff;
+
+  --accent:        #1e40af;
+  --accent-hover:  #1b3a9c;
+  --accent-soft:   #e8eefb;
+  --accent-2:      #0f766e;
+  --accent-3:      #b45309;
+  --danger:        #c02626;
+  --danger-soft:   #fcecec;
+  --warn:          #b45309;
+  --ok:            #15803d;
+
+  --type-number:   #1e40af;
+  --type-time:     #6d28d9;
+  --type-string:   #475569;
+
+  --shadow-1: 0 1px 2px rgba(15, 23, 42, .06);
+  --shadow-2: 0 6px 18px rgba(15, 23, 42, .10);
+  --shadow-3: 0 16px 40px rgba(15, 23, 42, .18);
+  --focus-ring: 0 0 0 2px rgba(30, 64, 175, .35);
+}
+
+/* --------------------------------------------------------------------------
+   迭代 17 · 三套高质感主题（UI/UX Pro Max 版式/配色数据库驱动，风格来源见注释）
+   令牌键与 :root 完全同名同集，组件层零改动即整体换肤；四套旧主题一行未动。
+     · atlas       企业蓝·数据密集 —— style: Data-Dense Dashboard（密度 8）
+     · observatory 暗色仪器台     —— style: Dark Mode (OLED) + 仪器精密感（不用纯黑）
+     · ledger      瑞士网格       —— style: Minimalism & Swiss Style（单色/网格/无阴影）
+   -------------------------------------------------------------------------- */
+
+/* ① atlas · 企业蓝 · 数据密集：冷白纸面 + 深海军蓝主色 + 琥珀仅用于标注 */
+html[data-theme="atlas"] {
+  --bg:            #F8FAFC;
+  --bg-sunken:     #EEF2F7;
+  --panel:         #FFFFFF;
+  --panel-alt:     #F4F7FB;
+  --panel-head:    #EDF2F9;
+  --border:        #DBEAFE;
+  --border-strong: #BFD3F2;
+  --grid-line:     #E8EFF9;
+
+  --ink:           #0F172A;
+  --ink-soft:      #475569;
+  --ink-dim:       #7A8699;
+  --ink-invert:    #F8FAFC;
+
+  --accent:        #1E40AF;
+  --accent-hover:  #1B3A9E;
+  --accent-soft:   #E4ECFD;
+  --accent-2:      #2563EB;
+  --accent-3:      #D97706;   /* 琥珀：只做标注/重点，不做正文 */
+  --danger:        #DC2626;
+  --danger-soft:   #FEECEC;
+  --warn:          #B45309;
+  --ok:            #15803D;
+
+  --type-number:   #1E40AF;
+  --type-time:     #6D28D9;
+  --type-string:   #475569;
+
+  --font-ui: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Consolas", "SFMono-Regular", monospace;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 14px;
+  --fs-xl: 16px;
+  --fs-title: 18px;
+  --radius: 3px;
+  --radius-lg: 5px;
+
+  /* 密集版式：阴影极浅，层次靠 1px 蓝灰描边 + 表头底色 */
+  --shadow-1: 0 1px 2px rgba(15, 23, 42, .06);
+  --shadow-2: 0 2px 8px rgba(15, 23, 42, .08);
+  --shadow-3: 0 10px 28px rgba(15, 23, 42, .16);
+
+  --focus-ring: 0 0 0 2px rgba(30, 64, 175, .32);
+}
+
+/* ② observatory · 暗色仪器台：深靛夜底 + 仪器青主色 + 荧光绿辅色（非纯黑，护眼） */
+html[data-theme="observatory"] {
+  --bg:            #0A0E27;
+  --bg-sunken:     #070A1C;
+  --panel:         #12162B;
+  --panel-alt:     #161B33;
+  --panel-head:    #1A2040;
+  --border:        #242C4E;
+  --border-strong: #33406E;
+  --grid-line:     #1E2542;
+
+  --ink:           #E6EDF7;
+  --ink-soft:      #A7B3CC;
+  --ink-dim:       #6F7D9C;
+  --ink-invert:    #0A0E27;
+
+  --accent:        #22D3EE;
+  --accent-hover:  #67E8F9;
+  --accent-soft:   #10283A;
+  --accent-2:      #4ADE80;
+  --accent-3:      #FBBF24;
+  --danger:        #F87171;
+  --danger-soft:   #2E1620;
+  --warn:          #FBBF24;
+  --ok:            #4ADE80;
+
+  --type-number:   #22D3EE;
+  --type-time:     #C4B5FD;
+  --type-string:   #A7B3CC;
+
+  --font-ui: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Consolas", "SFMono-Regular", monospace;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 14px;
+  --fs-xl: 16px;
+  --fs-title: 18px;
+  --radius: 3px;
+  --radius-lg: 5px;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .45);
+  --shadow-2: 0 6px 18px rgba(0, 0, 0, .55);
+  --shadow-3: 0 16px 40px rgba(0, 0, 0, .70);
+
+  --focus-ring: 0 0 0 2px rgba(34, 211, 238, .50);
+}
+
+/* 迭代 17 · observatory 的「主色上的文字」：该主题主色是亮青 #22D3EE，
+   而 components.css 里写死 #fff 的选中态（.btn-primary / 快捷方式选中 / 序号角标）
+   在亮青底上只有 1.9:1（白字压亮青，不可读）→ 主题层改用 --ink-invert（深靛）= 9.9:1。
+   选择器带 html[data-theme] 前缀，只作用于 observatory：
+   旧四套主题与另外两套新主题（accent 均为深色）一行不受影响。 */
+html[data-theme="observatory"] .btn-primary,
+html[data-theme="observatory"] .btn-primary:hover,
+html[data-theme="observatory"] .sc-btn.is-active,
+html[data-theme="observatory"] .chk-chip > .chip-order,
+html[data-theme="observatory"] .drop-order,
+html[data-theme="observatory"] #fullscreen-root .fs-btn.is-active { color: var(--ink-invert); }
+
+/* ion 离子深色的主色是亮天蓝（#38bdf8），白字压上去只有 2.14:1 → 同样改用 --ink-invert（深黑）= 9:1 量级。
+   迭代 18 扩到五套主题全覆盖测试后暴露的既有可读性问题。 */
+html[data-theme="ion"] .btn-primary,
+html[data-theme="ion"] .btn-primary:hover,
+html[data-theme="ion"] .sc-btn.is-active,
+html[data-theme="ion"] .chk-chip > .chip-order,
+html[data-theme="ion"] .drop-order,
+html[data-theme="ion"] #fullscreen-root .fs-btn.is-active { color: var(--ink-invert); }
+
+/* ③ ledger · 瑞士网格：纯白纸 + 单色墨 + 1px 网格 + 零圆角零阴影（排版即层次） */
+html[data-theme="ledger"] {
+  --bg:            #FFFFFF;
+  --bg-sunken:     #F4F4F5;
+  --panel:         #FFFFFF;
+  --panel-alt:     #FFFFFF;
+  --panel-head:    #F4F4F5;
+  --border:        #D4D4D8;
+  --border-strong: #71717A;
+  --grid-line:     #E6E6E9;
+
+  --ink:           #0B1220;
+  --ink-soft:      #3F3F46;
+  --ink-dim:       #71717A;
+  --ink-invert:    #FFFFFF;
+
+  --accent:        #0369A1;
+  --accent-hover:  #075985;
+  --accent-soft:   #E0F2FE;
+  --accent-2:      #334155;
+  --accent-3:      #B45309;
+  --danger:        #B91C1C;
+  --danger-soft:   #FEF2F2;
+  --warn:          #92400E;
+  --ok:            #166534;
+
+  --type-number:   #1E40AF;
+  --type-time:     #6D28D9;
+  --type-string:   #3F3F46;
+
+  --font-ui: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Consolas", "SFMono-Regular", monospace;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 14px;
+  --fs-xl: 16px;
+  --fs-title: 18px;
+  /* 瑞士网格：直角 + 零阴影，一切分隔靠 1px 描边 */
+  --radius:         0px;
+  --radius-lg:      0px;
+
+  --shadow-1: none;
+  --shadow-2: none;
+  --shadow-3: none;
+
+  --focus-ring: 0 0 0 2px rgba(3, 105, 161, .30);
+}
+
+/* --------------------------------------------------------------------------
+   交互节奏（Impeccable · Operate 模式：precision & restraint）
+   统一 120/160ms 过渡 + 尊重 prefers-reduced-motion；不改变任何布局数值。
+   -------------------------------------------------------------------------- */
+:root { --t-fast: 120ms; --t-base: 160ms; --ease: cubic-bezier(.2, .6, .2, 1); }
+
+.btn, .menu-item, .plot-tab, .tabs-tab, .chart-card, .data-grid tbody tr,
+.settings-collapse, .field-row input, .field-row select {
+  transition: background-color var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease),
+              color var(--t-fast) var(--ease),
+              box-shadow var(--t-base) var(--ease);
+}
+.btn:active { transform: translateY(.5px); }
+.btn:focus-visible, .menu-item:focus-visible, .plot-tab:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+
+/* 窄屏收紧设置区宽度（不动 JS 常量，1680 视口下的验收数值不受影响） */
+@media (max-width: 1180px) { :root { --settings-w: 268px; } }
+@media (max-width: 980px)  { :root { --settings-w: 244px; } }
+
+/* ── ledger 专属结构：技术手册式规则线（无填充、双线表头、零圆角、零阴影）
+   全部用 inset box-shadow 实现，不改变任何元素尺寸 → 不影响既有几何断言 ── */
+html[data-theme="ledger"] .setting-group {
+  border-bottom-color: var(--border);
+  box-shadow: inset 0 1px 0 rgba(11, 18, 32, .06);
+}
+html[data-theme="ledger"] .setting-group > .group-title {
+  letter-spacing: .09em;
+  color: var(--ink);
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+html[data-theme="ledger"] .chart-card,
+html[data-theme="ledger"] .chart-card:hover { box-shadow: none; }
+html[data-theme="ledger"] .chart-card { border-color: var(--border-strong); }
+html[data-theme="ledger"] .chart-card .card-head { background: transparent; box-shadow: inset 0 -1px 0 var(--border-strong); }
+html[data-theme="ledger"] table.data-grid thead { box-shadow: inset 0 2px 0 var(--ink); }
+html[data-theme="ledger"] table.data-grid thead th,
+html[data-theme="ledger"] .prop-table th,
+html[data-theme="ledger"] .tf-table th,
+html[data-theme="ledger"] .fn-table th {
+  background: #FFFFFF;
+  box-shadow: inset 0 -1px 0 var(--border-strong);
+}
+html[data-theme="ledger"] .btn,
+html[data-theme="ledger"] .mini-btn,
+html[data-theme="ledger"] .card-tool,
+html[data-theme="ledger"] input,
+html[data-theme="ledger"] select,
+html[data-theme="ledger"] .drop-trigger { border-radius: 0; }

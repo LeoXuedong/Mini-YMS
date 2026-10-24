@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="atlas">
+<head>
+<meta charset="UTF-8">
+<title>Mini-YMS v1.0.0 · 良率管理系统</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/table.css">
+<link rel="stylesheet" href="css/plot.css">
+<link rel="stylesheet" href="css/report.css">
+<!-- 迭代 17 · B 路：交互/层次/响应式精修覆盖层（必须最后加载，靠「后写者胜」覆盖上面六个文件） -->
+<link rel="stylesheet" href="css/polish.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ===================== 顶部标题栏 ===================== -->
+  <header id="app-header">
+    <div class="brand">
+      <span class="logo">Mini-YMS</span>
+      <div class="brand-text">
+        <h1>良率管理系统 <small class="app-ver">v1.0.0</small></h1>
+        <p>Yield Management System · 离线数据分析工具</p>
+      </div>
+    </div>
+    <div id="header-info" class="header-info">
+      <span class="chip" id="chip-file" title="当前文件">未载入数据</span>
+      <span class="chip" id="chip-shape" title="行 × 列">0 行 × 0 列</span>
+      <span class="chip chip-muted" id="chip-mode" title="当前视图">数据视图</span>
+    </div>
+    <div class="header-actions">
+      <button id="btn-help" class="btn btn-ghost" title="使用说明">使用说明</button>
+      <button id="btn-theme" class="btn btn-ghost" title="切换主题（点击依次轮换）">主题</button>
+      <button id="btn-lang" class="btn btn-ghost" title="Switch to English">EN</button>
+    </div>
+  </header>
+
+  <!-- ===================== 主布局：左列 + 右列设置区 ===================== -->
+  <main id="layout">
+
+    <!-- ---------- 左列 ---------- -->
+    <section id="left-col">
+
+      <!-- 第一行：菜单区 -->
+      <div id="menu-bar">
+        <div class="menu" data-menu="data">
+          <button class="menu-title" id="menu-data">Data<span class="caret">▾</span></button>
+          <div class="menu-list" id="menu-data-list">
+            <button class="menu-item" data-action="import"><span>Data Import</span><em>导入数据（CSV / TXT / Excel / .yms）</em></button>
+            <button class="menu-item" data-action="outport"><span>Data Outport</span><em>导出数据（CSV / Excel）</em></button>
+            <button class="menu-item" data-action="save"><span>Save Data</span><em>保存当前数据</em></button>
+            <button class="menu-item" data-action="save-template"><span>Save Data with Template</span><em>保存处理后数据 + 格式 + 绘图（.yms）</em></button>
+            <div class="menu-sep"></div>
+            <button class="menu-item" data-action="report"><span>Report Export</span><em>导出 PPT 报告（按 Page 分页，含全部图表）</em></button>
+          </div>
+        </div>
+        <div class="menu" data-menu="plot">
+          <button class="menu-title" id="menu-plot">Plot<span class="caret">▾</span></button>
+          <div class="menu-list" id="menu-plot-list">
+            <button class="menu-item" data-plot="line"><span>Line Plot</span><em>折线图</em></button>
+            <button class="menu-item" data-plot="box"><span>Box Plot</span><em>箱线图</em></button>
+            <button class="menu-item" data-plot="bar"><span>Bar Plot</span><em>柱状图</em></button>
+            <button class="menu-item" data-plot="hist"><span>Hist Plot</span><em>直方图</em></button>
+            <button class="menu-item" data-plot="scatter"><span>Scatter Plot</span><em>散点图</em></button>
+          </div>
+        </div>
+        <!-- 迭代 14：Table 菜单壳（10 个转换入口；点击发 YMS.bus.emit('transform:open', {kind}） -->
+        <div class="menu" data-menu="table">
+          <button class="menu-title" id="menu-table">Table<span class="caret">▾</span></button>
+          <div class="menu-list menu-table-list" id="menu-table-list">
+            <div class="menu-group">Pivot / Unpivot</div>
+            <button class="menu-item" data-tr="pivot"><span>Pivot · 透视（长→宽）</span><em>唯一值展开成新列，缺组合留空</em></button>
+            <button class="menu-item" data-tr="unpivot"><span>Unpivot · 逆透视（宽→长）</span><em>多列折叠成「变量 / 值」两列</em></button>
+            <button class="menu-item" data-tr="transpose"><span>Transpose · 转置</span><em>行列互换（可选某列作新表头）</em></button>
+            <div class="menu-sep"></div>
+            <div class="menu-group">Combine</div>
+            <button class="menu-item" data-tr="vconcat"><span>Vertical Concat · 纵向连接</span><em>多表上下拼接（并集 / 交集）</em></button>
+            <button class="menu-item" data-tr="hconcat"><span>Horizontal Concat · 横向连接</span><em>多表并排 / 按关键列对齐</em></button>
+            <button class="menu-item" data-tr="join"><span>Join · 表连接</span><em>按键连接（内 / 左 / 右 / 外）</em></button>
+            <div class="menu-sep"></div>
+            <div class="menu-group">Column Ops</div>
+            <button class="menu-item" data-tr="split"><span>Split Column · 分列</span><em>按分隔符把一列拆成多列</em></button>
+            <button class="menu-item" data-tr="merge"><span>Merge Columns · 合并列</span><em>多列合并成一列</em></button>
+            <div class="menu-sep"></div>
+            <div class="menu-group">Aggregate</div>
+            <button class="menu-item" data-tr="agg"><span>Group Aggregate · 分组汇总</span><em>按列分组做 sum / mean / count …</em></button>
+            <button class="menu-item" data-tr="dedup"><span>Dedupe · 去重</span><em>按列去重（保留首行 / 末行）</em></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 第二行：快捷方式区（顺序固定） -->
+      <div id="shortcut-bar">
+        <button class="sc-btn" data-view="table" id="sc-table" title="数据视图"><span class="sc-ico">▤</span>Table</button>
+        <button class="sc-btn" data-plot="scatter" title="散点图"><span class="sc-ico">⁘</span>Scatter</button>
+        <button class="sc-btn" data-plot="line" title="折线图"><span class="sc-ico">⁄</span>Line</button>
+        <button class="sc-btn" data-plot="hist" title="直方图"><span class="sc-ico">▥</span>Hist</button>
+        <button class="sc-btn" data-plot="bar" title="柱状图"><span class="sc-ico">▮</span>Bar</button>
+        <button class="sc-btn" data-plot="box" title="箱线图"><span class="sc-ico">⊞</span>Box</button>
+      </div>
+
+      <!-- 第三行：数据视图 / 绘图视图 -->
+      <div id="work-area">
+
+        <div id="data-view" class="view">
+          <div id="raw-panel" class="panel">
+            <div class="panel-head">
+              <span class="panel-title">原始表格区</span>
+              <span class="panel-hint">右键参数查看属性</span>
+            </div>
+            <!-- 迭代 14：多表列表（顶部；>8 张时列表内部滚动，不挤占列清单高度） -->
+            <div id="tables-panel" class="tables-panel is-empty">
+              <div class="tables-head">
+                <span class="tables-title" id="tables-count">表格（0）</span>
+                <span class="tables-hint">右键管理</span>
+              </div>
+              <div id="tables-list" class="tables-list">
+                <div class="empty-hint">尚无表格</div>
+              </div>
+            </div>
+            <div id="raw-table-name" class="raw-table-name">—</div>
+            <div id="raw-header-list" class="raw-header-list">
+              <div class="empty-hint">尚未载入数据</div>
+            </div>
+          </div>
+          <div id="grid-panel" class="panel">
+            <div class="panel-head">
+              <span class="panel-title">数据显示区</span>
+              <span class="panel-hint" id="grid-count">共 0 行</span>
+            </div>
+            <div id="grid-wrap" class="grid-wrap">
+              <div class="empty-hint">尚未载入数据</div>
+            </div>
+            <div id="grid-pager" class="grid-pager"></div>
+          </div>
+        </div>
+
+        <div id="plot-view" class="view">
+          <div id="plot-tabs" class="plot-tabs"></div>
+          <div id="plot-canvas-wrap" class="plot-canvas-wrap">
+            <div class="empty-hint">尚未绘图 —— 请在右侧「绘图设置区」配置 X Label / Value 后点击 <b>Submit</b></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 状态栏 -->
+      <div id="status-bar">
+        <span id="status-msg" class="status-msg">就绪</span>
+        <span class="status-right">
+          <span id="status-rows">0 行</span>
+          <span id="status-filter" class="status-dim">未过滤</span>
+          <span id="status-time">—</span>
+        </span>
+      </div>
+    </section>
+
+    <!-- ---------- 右列：设置区 ---------- -->
+    <aside id="settings-col">
+      <div id="data-settings" class="settings-panel" data-panel="data">
+        <div class="settings-head"><span>数据设置区</span></div>
+        <div class="settings-body" id="data-settings-body">
+          <div class="empty-hint">尚未载入数据</div>
+        </div>
+      </div>
+      <div id="plot-settings" class="settings-panel" data-panel="plot">
+        <div class="settings-head"><span>绘图设置区</span></div>
+        <div class="settings-body" id="plot-settings-body">
+          <div class="empty-hint">尚未载入数据</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<!-- ===================== 浮层容器 ===================== -->
+<div id="modal-root"></div>
+<div id="context-menu-root"></div>
+<div id="toast-root"></div>
+<div id="progress-root"></div>
+
+<!-- ===================== 内置库（本地 vendor，禁止 CDN） ===================== -->
+<script src="vendor/echarts.min.js"></script>
+<script src="vendor/xlsx.full.min.js"></script>
+
+<!-- ===================== 核心层 ===================== -->
+<script src="js/core/i18n.js"></script>
+<script src="js/core/i18n-dict-chrome.js"></script>
+<script src="js/core/i18n-dict-panels.js"></script>
+<script src="js/core/util.js"></script>
+<script src="js/core/events.js"></script>
+<script src="js/core/types.js"></script>
+<script src="js/core/dataframe.js"></script>
+<script src="js/core/store.js"></script>
+
+<!-- ===================== 数据层 ===================== -->
+<script src="js/data/csv-parser.js"></script>
+<script src="js/data/importer.js"></script>
+<script src="js/data/exporter.js"></script>
+<script src="js/data/yms-template.js"></script>
+<script src="js/data/sample-data.embedded.js"></script>
+<script src="js/data/transform.js"></script>
+<script src="js/data/group-map.js"></script>
+
+<!-- ===================== 表格视图层 ===================== -->
+<script src="js/table/data-grid.js"></script>
+<script src="js/table/column-ops.js"></script>
+<script src="js/table/group-ui.js"></script>
+<script src="js/table/expr-help.js"></script>
+<script src="js/table/table-view.js"></script>
+<script src="js/table/transform-ui.js"></script>
+<script src="js/table/data-settings.js"></script>
+
+<!-- ===================== 绘图层 ===================== -->
+<script src="js/plot/palettes.js"></script>
+<script src="js/plot/aggregate.js"></script>
+<script src="js/plot/axis.js"></script>
+<script src="js/plot/fitting.js"></script>
+<script src="js/plot/chart-builder.js"></script>
+<script src="js/plot/fullscreen.js"></script>
+<script src="js/plot/plot-view.js"></script>
+<script src="js/plot/plot-settings.js"></script>
+
+<!-- ===================== 报告层 ===================== -->
+<script src="js/report/pptx.js"></script>
+<script src="js/report/report.js"></script>
+
+<!-- ===================== 编排层 ===================== -->
+<script src="js/help.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
