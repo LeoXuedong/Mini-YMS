@@ -13,17 +13,25 @@ const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
 
+/* 路径一律由环境推导，不写死任何用户名/盘符（公开仓库不留个人路径）。
+   可用环境变量覆盖：HERMES_HOME / LOCALAPPDATA / PLAYWRIGHT_PATH / PLAYWRIGHT_CHROMIUM
+   注：Windows 下 os.homedir() 返回反斜杠，require() 与 fs.existsSync() 都能直接处理，无需转换 */
+const os = require('os');
+const HOME = String(os.homedir() || '');
+const LOCAL = String(process.env.LOCALAPPDATA || (HOME + '/AppData/Local'));
+const HERMES = String(process.env.HERMES_HOME || (LOCAL + '/hermes'));
+
 const PW_CANDIDATES = [
   'playwright',
-  'C:/Users/Xuedong/AppData/Local/hermes/hermes-agent/node_modules/playwright',
-  'C:/Users/Xuedong/AppData/Local/hermes/hermes-agent/node_modules/playwright-core'
+  HERMES + '/hermes-agent/node_modules/playwright',
+  HERMES + '/hermes-agent/node_modules/playwright-core'
 ];
 
 const CHROME_CANDIDATES = [
-  'C:/Users/Xuedong/AppData/Local/hermes/tools/chromium-1208/chrome-win64/chrome.exe',
-  'C:/Users/Xuedong/AppData/Local/hermes/tools/chromium-1228/chrome-win64/chrome.exe',
-  'C:/Users/Xuedong/AppData/Local/ms-playwright/chromium-1228/chrome-win64/chrome.exe',
-  'C:/Users/Xuedong/AppData/Local/ms-playwright/chromium-1247/chrome-win64/chrome.exe'
+  HERMES + '/tools/chromium-1208/chrome-win64/chrome.exe',
+  HERMES + '/tools/chromium-1228/chrome-win64/chrome.exe',
+  LOCAL + '/ms-playwright/chromium-1228/chrome-win64/chrome.exe',
+  LOCAL + '/ms-playwright/chromium-1247/chrome-win64/chrome.exe'
 ];
 
 function exists(p) {
@@ -48,7 +56,7 @@ function resolvePlaywright() {
     '解决办法（任选其一）：\n' +
     '  1) 在 D:\\AI Agent\\Hermes\\YMS 下执行  npm i -D playwright\n' +
     '  2) 设置环境变量 PLAYWRIGHT_PATH=<playwright 包所在目录>\n' +
-    '  3) 使用 hermes 自带的一份：C:/Users/Xuedong/AppData/Local/hermes/hermes-agent/node_modules/playwright'
+    '  3) 使用 hermes 自带的一份：$HERMES_HOME/hermes-agent/node_modules/playwright'
   );
 }
 

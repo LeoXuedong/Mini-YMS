@@ -92,13 +92,13 @@ module.exports = {
 测试绿不代表有覆盖。做法：把应用退回修复前状态再跑一遍，**必须全红**。
 
 ```bash
-cd "C:/Users/Xuedong/AppData/Local/hermes/kanban/boards/yms/workspaces/t_259af92e"
-rm -rf pre_fix_app && cp -r "D:/AI Agent/Hermes/YMS/YMS-App" pre_fix_app
+cd "$HERMES_HOME/kanban/boards/yms/workspaces/t_259af92e"
+rm -rf pre_fix_app && cp -r "<项目根>/YMS-App" pre_fix_app
 rm -rf pre_fix_app/test
-cp -r "D:/AI Agent/Hermes/YMS/build/bak_fix_20261021/." pre_fix_app/   # 12 个文件的修复前副本
+cp -r "<项目根>/build/bak_fix_20261021/." pre_fix_app/   # 12 个文件的修复前副本
 
-cd "D:/AI Agent/Hermes/YMS"
-node YMS-App/test/run.js --app="C:/Users/Xuedong/AppData/Local/hermes/kanban/boards/yms/workspaces/t_259af92e/pre_fix_app/index.html"
+cd "<项目根>"
+node YMS-App/test/run.js --app="$HERMES_HOME/kanban/boards/yms/workspaces/t_259af92e/pre_fix_app/index.html"
 ```
 
 实测结果：`FAIL 70 / 121（失败 51 条）`，退出码 1，三个用例全红。

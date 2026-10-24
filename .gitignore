@@ -5,6 +5,9 @@
 YMS-App/sample/sample_yield_data_100k.csv
 
 
+# 开发过程日志（含本地绝对路径，随迭代累积；属个人工作记录，不入公开仓库）
+YMS-App/test/PROGRESS.md
+
 # 依赖与缓存（CI 里 npm install 重建，不进仓库）
 node_modules/
 .npm/
@@ -29,3 +32,17 @@ __pycache__/
 *.pptx
 *.yms
 *.png
+
+# 本地开发脚本 / 探针 / 性能样本 / 日志（不属于运行必需，也不进公开仓库）
+build/*
+!build/package.py
+docs/
+*.docx
+*.doc
+
+# 根目录散落的数据副本与需求稿（应用内示例在 YMS-App/sample/）
+/sample_yield_data*.csv
+/YMS软件开发*
+
+# 开发过程日志（含本地绝对路径，属个人工作记录）
+YMS-App/test/PROGRESS.md
